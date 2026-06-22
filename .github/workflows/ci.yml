@@ -2,25 +2,47 @@ name: CI Pipeline
 
 on:
   push:
-    branches: ['*']
+    branches:
+      - "**"
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   install:
     runs-on: ubuntu-latest
     steps:
+      # Fix: Checkout repo so code is available
       - uses: actions/checkout@v4
+
+      # Fix: Setup Node.js
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
+
+      # Fix: Use npm ci for reproducible installs
       - name: Install dependencies
-        run: npm install   # BUG 1 — should be npm ci
+        run: npm ci
 
   test:
     runs-on: ubuntu-latest
-    # BUG 2 — missing needs: install, so test runs in parallel with install
-    # BUG 3 — no checkout or npm ci step, so node_modules is empty on this fresh machine
+
+    # Fix: Ensure test runs AFTER install job
+    needs: install
+
     steps:
+      # Fix: Checkout again (each job is isolated)
+      - uses: actions/checkout@v4
+
+      # Fix: Setup Node again
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # Fix: Install dependencies again in this job
+      - name: Install dependencies
+        run: npm ci
+
+      # Run tests
       - name: Run tests
         run: npm test
