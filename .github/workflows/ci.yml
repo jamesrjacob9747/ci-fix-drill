@@ -11,16 +11,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
+
+      # Use npm ci for reproducible installs
       - name: Install dependencies
-        run: npm install   # BUG 1 — should be npm ci
+        run: npm ci
 
   test:
     runs-on: ubuntu-latest
-    # BUG 2 — missing needs: install, so test runs in parallel with install
-    # BUG 3 — no checkout or npm ci step, so node_modules is empty on this fresh machine
+
+    # Ensure install job finishes first
+    needs: install
+
     steps:
+      # Every job gets a fresh machine, so checkout again
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # Install dependencies on this machine
+      - name: Install dependencies
+        run: npm ci
+
       - name: Run tests
         run: npm test
