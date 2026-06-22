@@ -2,41 +2,47 @@ name: CI Pipeline
 
 on:
   push:
-    branches: ['*']
+    branches:
+      - "**"
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   install:
     runs-on: ubuntu-latest
     steps:
+      # Fix: Checkout repo so code is available
       - uses: actions/checkout@v4
 
+      # Fix: Setup Node.js
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      # Use npm ci for reproducible installs
+      # Fix: Use npm ci for reproducible installs
       - name: Install dependencies
         run: npm ci
 
   test:
     runs-on: ubuntu-latest
 
-    # Ensure install job finishes first
+    # Fix: Ensure test runs AFTER install job
     needs: install
 
     steps:
-      # Every job gets a fresh machine, so checkout again
+      # Fix: Checkout again (each job is isolated)
       - uses: actions/checkout@v4
 
+      # Fix: Setup Node again
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      # Install dependencies on this machine
+      # Fix: Install dependencies again in this job
       - name: Install dependencies
         run: npm ci
 
+      # Run tests
       - name: Run tests
         run: npm test
